@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Entertainment Booking Form</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+    <link rel="stylesheet" href="/static/css/input.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  </head>
+  <body>
+    <div class="testbox">
+      <form action="/tambah_data" method="post" onsubmit="return validateForm();">
+        <div class="banner">
+          <h1>Input data kas UKM STIKOM PGRI Banyuwangi</h1>
+        </div>
+        <div class="item">
+          <p>Tanggal Transaksi</p>
+          <input type="date" name="bdate" />
+          <i class="fas fa-calendar-alt"></i>
+        </div>
+        <div class="item">
+          <p>Pilih Transaksi</p>
+          <select name="jenis">
+            <option value="">Pilih Salah satu</option>
+            <option value="Pemasukan">Pemasukan</option>
+            <option value="Pengeluaran">Pengeluaran</option>
+          </select>
+        </div>
+        <div class="item">
+          <p>Nama</p>
+          <input type="text" name="name"/>
+        </div>
+        <div class="item">
+          <p>UKM</p>
+          <select name="ukm">
+            <option value="">Pilih Salah satu</option>
+            <option value="BEM">BEM</option>
+            <option value="Kamera">Kamera</option>
+            <option value="Meds Jurnalistik">Meds Jurnalistik</option>
+            <option value="Kloso">Kloso</option>
+            <option value="Rohisti">Rohisti</option>
+            <option value="Rpg">Rpg</option>
+            <option value="Sms">Sms</option>
+          </select>
+        </div>
+        <div class="item">
+          <p>Contact Email</p>
+          <input type="text" name="email"/>
+        </div>
+        <div class="item">
+          <p>Contact Hp</p>
+          <input type="text" name="nomor_hp"/>
+        </div>
+        <div class="item">
+          <p>Nominal Uang</p>
+          <input type="number" name="nominal"/>
+        </div>
+        <div class="question">
+          <p>Apakah Data Sudah Benar?</p>
+          <div class="question-answer">
+            <div>
+              <input type="radio" value="none" id="radio_1" name="recorded" />
+              <label for="radio_1" class="radio"><span>Yes</span></label>
+            </div>
+            <div>
+              <input type="radio" value="none" id="radio_2" name="recorded" />
+              <label for="radio_2" class="radio"><span>No</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="btn-block">
+          <button type="submit">SEND</button>
+        </div>
+      </form>
+    </div>
+  </body>
+</html>
+<script>
+  function validateForm() {
+    var inputs = document.getElementsByTagName("input");
+    var selects = document.getElementsByTagName("select");
+    var isFormValid = true;
+
+    // Cek input teks
+    for (var i = 0; i < inputs.length; i++) {
+      if (inputs[i].value === "") {
+        isFormValid = false;
+        break;
+      }
+    }
+
+    // Cek select
+    for (var j = 0; j < selects.length; j++) {
+      if (selects[j].value === "") {
+        isFormValid = false;
+        break;
+      }
+    }
+
+    if (!isFormValid) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Mohon lengkapi semua data sebelum mengirim formulir!',
+        footer: '<a href="">Mengapa saya mendapatkan pesan ini?</a>'
+      });
+    }
+
+    return isFormValid;
+  }
+</script>
