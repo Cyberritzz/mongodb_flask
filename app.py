@@ -10,7 +10,7 @@ app.secret_key = 'harissofyan'
 schema = JsonSchema(app)
 
 # Connect to the MongoDB server
-uri = "mongodb+srv://haris:haris@cluster0.c4chfsx.mongodb.net/?retryWrites=true&w=majority"
+uri ="isi dengan databasemu sendiri"
 client = MongoClient(uri)
 
 # Select the database and collections
