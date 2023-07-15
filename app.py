@@ -1,6 +1,8 @@
-from flask import Flask, render_template, jsonify, request, redirect, session
+from flask import Flask, render_template, jsonify, request, redirect, session, flash
 from pymongo import MongoClient
 from bson import ObjectId
+from babel.numbers import format_decimal
+from pymongo.operations import InsertOne, DeleteMany
 from jsonschema import validate, ValidationError
 from flask_json_schema import JsonSchema , JsonValidationError
 from pymongo.errors import BulkWriteError
@@ -10,7 +12,7 @@ app.secret_key = 'harissofyan'
 schema = JsonSchema(app)
 
 # Connect to the MongoDB server
-uri ="isi dengan databasemu sendiri"
+uri ="mongodb+srv://haris:haris@cluster0.c4chfsx.mongodb.net/?retryWrites=true&w=majority"
 client = MongoClient(uri)
 
 # Select the database and collections
@@ -26,9 +28,6 @@ def check_database_connection():
     except Exception as e:
         print('Error connecting to MongoDB:', str(e))
 
-@app.before_request
-def before_request():
-    session.permanent = True
 
 @app.route('/data')
 @app.route('/data/<user_id>')
@@ -68,7 +67,34 @@ def data(user_id=None):
     if result:
         total_sum = result[0]['total']
 
-    return render_template('data.html', username_pengguna=username_pengguna, data_input=data_input, int=int, total_count=total_count, total_sum=total_sum)
+    # Comparison Query
+    comparison_pipeline = [
+        {
+            '$match': {
+                'transaksi': 'Pemasukan',  # Filter transaksi pemasukan
+                'nominal': {'$gt': 0}  # Filter nominal yang lebih besar dari 0
+            }
+        },
+        {
+            '$group': {
+                '_id': None,
+                'avg_nominal': {'$avg': '$nominal'}  # Menghitung rata-rata nominal
+            }
+        }
+    ]
+
+    comparison_result = list(collection.aggregate(comparison_pipeline))
+
+    avg_nominal = 0
+    if comparison_result:
+        avg_nominal = comparison_result[0]['avg_nominal']
+        avg_nominal_formatted = format_decimal(avg_nominal, format='#,##0.00')
+    else:
+        avg_nominal_formatted = '0.00'
+
+
+    return render_template('data.html', username_pengguna=username_pengguna, data_input=data_input, int=int,
+                           total_count=total_count, total_sum=total_sum, avg_nominal_formatted=avg_nominal_formatted)
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -82,9 +108,14 @@ def login():
             session['user_id'] = str(user['_id'])
             return redirect('/data')
         else:
+            'Username or password is incorrect'
             return redirect('/')
     else:
-        return render_template('index.html')
+        if 'user_id' in session:
+            return redirect('/data')
+        else:
+            return render_template('index.html')
+
 
 @app.route('/logout')
 def logout():
@@ -148,7 +179,7 @@ def add_data():
                 },
                 'required': ['tanggal', 'transaksi', 'nama', 'ukm', 'email', 'nomor_hp', 'nominal']
             })
-        except ValidationError as e:
+        except ValidationError as e:    
             return jsonify({'message': 'Invalid data', 'error': str(e)}), 400
 
         collection.insert_one(data)
@@ -226,13 +257,32 @@ def proses():
         bulk_operations.append(data)
 
     try:
-        result = collection.insert_many(bulk_operations)
+        # Membangun query untuk filtering data
+        query = {
+            '$and': [
+                {'transaksi': 'Pengeluaran'},  # Filter jenis transaksi pengeluaran
+                {'nominal': {'$lte': -500000}}  # Filter pengeluaran tidak boleh melebihi -500000 (negatif karena pengeluaran)
+            ]
+        }
+        # Melakukan operasi logical query dengan menggunakan bulk_write
+        requests = [InsertOne(data) for data in bulk_operations]
+        requests.append(DeleteMany(query))  # Contoh operasi logical query: menghapus data yang memenuhi kondisi logika
+        result = collection.bulk_write(requests)
+
+        if result.deleted_count > 0:
+            flash('Beberapa data pengeluaran melebihi 500.000 dan telah dihapus.', 'warning')
+        else:
+            flash('Data berhasil disimpan dan diproses.', 'success')
+
         return redirect('/data')
     except BulkWriteError as e:
         return "Terjadi kesalahan saat menyimpan data"
-
+    
+@app.route('/search', methods=['GET'])
+def logic():
+    return render_template('search_logic.html')
 
 if __name__ == '__main__':
     check_database_connection()
-    app.run(debug=True)
+    app.run(host='10.34.1.225', port=5000, debug=True)
 

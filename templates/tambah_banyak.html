@@ -3,6 +3,7 @@
 <head>
   <title>Form Tambah Data Dinamis</title>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+  <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 </head>
 <body>
 <br>
@@ -83,7 +84,7 @@
     </div>
   </div>
 </div>
-<!-- fungsi javascript untuk menampilkan form dinamis  -->
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script type="text/javascript">
   $(document).ready(function() {
@@ -92,9 +93,32 @@
       $(".after-add-more").after(html);
     });
 
-    // saat tombol remove diklik, control group akan dihapus 
     $("body").on("click", ".remove", function(){ 
       $(this).parents(".control-group").remove();
+    });
+
+    // Menggunakan SweetAlert untuk menampilkan notifikasi jika pengeluaran melebihi 500,000
+    $("form").submit(function(event) {
+      var pengeluaranInput = $("input[name='nominal[]']");
+      var totalPengeluaran = 0;
+
+      pengeluaranInput.each(function() {
+        var value = parseFloat($(this).val());
+        if (value < 0) {
+          totalPengeluaran += Math.abs(value);
+        }
+      });
+
+      if (totalPengeluaran > 500000) {
+        event.preventDefault(); // Mencegah form dikirim
+
+        swal({
+          title: "Peringatan!",
+          text: "Total pengeluaran melebihi 500,000. Tidak diperbolehkan!",
+          icon: "warning",
+          button: "OK",
+        });
+      }
     });
   });
 </script>
